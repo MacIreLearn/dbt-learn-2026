@@ -1,2 +1,2 @@
-# dat-learn-2026
+# dbt-learn-2026
 Self learn DBT - Airbnb project
