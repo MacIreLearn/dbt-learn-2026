@@ -1,0 +1,15 @@
+exposures:
+  - name: Executive_Dashboard
+    type: dashboard
+    maturity: low
+    url: https://17bea53d.us2a.app.preset.io/superset/dashboard/p/M6YoWE6Zlwy/
+    description: This dashboard provides an overview of key metrics and insights in Airbnb for executives to monitor the performance of the business. It includes visualizations and data points that help in making informed decisions.
+
+    depends_on:
+      - ref('dim_listings_w_hosts')
+      - ref('mart_fullmoon_reviews')
+    
+    owner:
+      name: Aravind B
+      email: aravind.learning07@gmail.com
+    
