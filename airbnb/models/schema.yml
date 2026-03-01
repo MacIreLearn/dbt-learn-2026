@@ -1,49 +1,57 @@
 models:
-  - name: dim_listing_cleansed
-    description: This model cleanses the raw listing data by removing duplicates, filtering out listings with missing critical information, and standardizing the room_type values. It also includes tests to ensure data quality and integrity.
+- name: dim_listing_cleansed
+  description: This model cleanses the raw listing data by removing duplicates, filtering out listings with missing critical information, and standardizing the room_type values. It also includes tests to ensure data quality and integrity.
+  data_tests:
+  - minimum_row_count:
+      arguments:
+        min_row_count: 1000
+  columns:
+  #Tests that are run on individual columns of the model after it is built
+  - name: listing_id
+    description: This column is the primary key of the model, so we will test if the values in this column are unique and not null. This is a generic test that can be applied to any column by changing the test type to unique and not_null.
     data_tests:
-      - minimum_row_count:
-          arguments:
-            min_row_count: 1000
-    columns:   #Tests that are run on individual columns of the model after it is built
-      - name: listing_id
-        description: This column is the primary key of the model, so we will test if the values in this column are unique and not null. This is a generic test that can be applied to any column by changing the test type to unique and not_null.
-        data_tests:
-          - unique
-          - not_null
+    - unique
+    - not_null
 
-      - name: host_id     #Foreign key to dim_hosts_cleansed, so we will test if the values in this column are present in the host_id column of dim_hosts_cleansed
-        description: This column is a foreign key to dim_hosts_cleansed, so we will test if the values in this column are present in the host_id column of dim_hosts_cleansed
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_hosts_cleansed')
-                field: host_id
-      - name: room_type    #This column has a limited set of accepted values, so we will test if the values in this column are among the accepted values
-        description: This column has a limited set of accepted values, so we will test if the values in this column are among the accepted values. This is a generic test that can be applied to any column by changing the accepted values in the test definition.
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: ['Entire home/apt', 'Private room', 'Shared room', 'Hotel room']
-      - name: minimum_nights    #(Generic test) This column should have positive values, so we will test if the values in this column are positive
-        description: '{{ doc("dim_listing_cleansed_minimum_nights") }}'
-        data_tests:
-          - positive_values
+  - name: host_id #Foreign key to dim_hosts_cleansed, so we will test if the values in this column are present in the host_id column of dim_hosts_cleansed
+    description: This column is a foreign key to dim_hosts_cleansed, so we will test if the values in this column are present in the host_id column of dim_hosts_cleansed
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('dim_hosts_cleansed')
+          field: host_id
+  - name: room_type #This column has a limited set of accepted values, so we will test if the values in this column are among the accepted values
+    description: This column has a limited set of accepted values, so we will test if the values in this column are among the accepted values. This is a generic test that can be applied to any column by changing the accepted values in the test definition.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [ 'Entire home/apt', 'Private room', 'Shared room', 'Hotel room' ]
+  - name: minimum_nights #(Generic test) This column should have positive values, so we will test if the values in this column are positive
+    description: '{{ doc("dim_listing_cleansed_minimum_nights") }}'
+    data_tests:
+    - positive_values
 
-  - name: dim_hosts_cleansed    #This is contract test, which defines the expected schema of the model. If the model does not match this schema, the dbt run will fail. This is useful for ensuring that the model has the expected structure and data types.
-    description: This model cleanses the raw host data by removing duplicates, filtering out hosts with missing critical information, and standardizing the is_superhost values. It also includes a contract test to ensure that the model has the expected schema and data types.
-    config:
-      contract:
-        enforced: true
-    columns:
-      - name: host_id
-        data_type: integer
-      - name: host_name
-        data_type: string
-      - name: is_superhost
-        data_type: boolean
-      - name: host_updated_at
-        data_type: timestamp
-      - name: host_created_at
-        data_type: timestamp
+- name: dim_hosts_cleansed #This is contract test, which defines the expected schema of the model. If the model does not match this schema, the dbt run will fail. This is useful for ensuring that the model has the expected structure and data types.
+  description: This model cleanses the raw host data by removing duplicates, filtering out hosts with missing critical information, and standardizing the is_superhost values. It also includes a contract test to ensure that the model has the expected schema and data types.
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: host_id
+    data_type: integer
+  - name: host_name
+    data_type: string
+  - name: is_superhost
+    data_type: boolean
+  - name: host_updated_at
+    data_type: timestamp
+  - name: host_created_at
+    data_type: timestamp
+
+- name: dim_listings_w_hosts
+  description: This model combines the cleansed listing and host data to create a comprehensive view of the listings with their associated host information. It also includes a test to ensure that the number of rows in this model matches the number of rows in the source listings table, which helps to verify that all listings have been included in the model.
+  tests:
+  - dbt_expectations.expect_table_row_count_to_equal_other_table:
+      arguments:
+        compare_model: source('airbnb', 'listings')
